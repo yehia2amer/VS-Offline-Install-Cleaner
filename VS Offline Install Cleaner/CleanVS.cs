@@ -7,9 +7,8 @@ namespace VS_Offline_Install_Cleaner
 {
     public class CleanVs
     {
-        internal bool MoveUnneededPackagesToUnneededPackagesfolderFolder(string vsOfflineDirectory, IEnumerable<string> pakagesTobeMoved, string unneededPackagesfolderName)
+        internal void MoveUnneededPackagesToUnneededPackagesfolderFolder(string vsOfflineDirectory, IEnumerable<string> pakagesTobeMoved, string unneededPackagesfolderName)
         {
-
             bool exists = Directory.Exists($@"{vsOfflineDirectory}\{unneededPackagesfolderName}");
 
             if (!exists)
@@ -22,7 +21,6 @@ namespace VS_Offline_Install_Cleaner
                 string sourceDirName = $@"{vsOfflineDirectory}\{packageFolderName}";
                 string destinationDirName = $@"{vsOfflineDirectory}\{unneededPackagesfolderName}\{packageFolderName}";
 
-                if (packageFolderName == unneededPackagesfolderName && packageFolderName == "certificates") continue;
                 try
                 {
                     Directory.Move(sourceDirName, destinationDirName);
@@ -31,10 +29,7 @@ namespace VS_Offline_Install_Cleaner
                 {
                     // ignored
                 }
-
             }
-
-            return true;
         }
         internal HashSet<string> GetPackageNames(string catalogFileName)
         {
@@ -58,6 +53,15 @@ namespace VS_Offline_Install_Cleaner
                 if (!string.IsNullOrEmpty(package.Language))
                     currentpackageName += $",language={package.Language}";
 
+                if (!string.IsNullOrEmpty(package.Branch))
+                    currentpackageName += $",branch={package.Branch}";
+
+                if (!string.IsNullOrEmpty(package.Productarch))
+                    currentpackageName += $",productarch={package.Productarch}";
+
+                if (!string.IsNullOrEmpty(package.Machinearch))
+                    currentpackageName += $",machinearch={package.Machinearch}";
+
                 packageNames.Add(currentpackageName);
             }
             return packageNames.ToHashSet();
@@ -65,7 +69,8 @@ namespace VS_Offline_Install_Cleaner
 
         internal HashSet<string> GetFolderNames(string vsOfflineDirectory)
         {
-            List<string> vsFolderNames = Directory.GetDirectories(vsOfflineDirectory).Select(folderpath => new DirectoryInfo(folderpath).Name).ToList();
+            var vsFolderNames = Directory.GetDirectories(vsOfflineDirectory)
+                .Select(folderpath => new DirectoryInfo(folderpath).Name);
 
             return vsFolderNames.ToHashSet();
         }
