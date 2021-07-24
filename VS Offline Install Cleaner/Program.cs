@@ -7,11 +7,14 @@ namespace VS_Offline_Install_Cleaner
 {
     internal class Program
     {
+        const string unneededPackagesfolderName = "ToBeRemoved";
+        public const string CertificatesDirName = "certificates";
+
+
         internal static void Main(string[] args)
         {
             string vsOfflineDirectory = System.IO.Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
             string catalogFileName = "Catalog.json";
-            string unneededPackagesfolderName = "ToBeRemoved";
 
             Console.WriteLine($"Please Enter Visual Studio Offline Directory [Default : {vsOfflineDirectory}]");
             string tempVsOfflineDirectory = Console.ReadLine();
@@ -31,14 +34,21 @@ namespace VS_Offline_Install_Cleaner
             HashSet<string> packageNames = new CleanVs().GetPackageNames(vsOfflineDirectory + "\\" + catalogFileName);
             //Console.WriteLine($"Number of Packages in the catalog File : {packageNames.Count}");
 
-            IEnumerable<string> pakagesNotListedInCatalog = folderNames.Except(packageNames).ToHashSet();
+            IEnumerable<string> pakagesNotListedInCatalog = folderNames.Except(packageNames, StringComparer.OrdinalIgnoreCase)
+                .Where(p => !CertificatesDirName.Equals(p) && !unneededPackagesfolderName.Equals(p))
+                .ToHashSet();
+            if (pakagesNotListedInCatalog.Count() < 1)
+            {
+                Console.WriteLine("Press any key to Exit");
+                Console.ReadLine();
+                return;
+            }
+
             Console.WriteLine($"Number of Folder Needs to be Cleaned : {pakagesNotListedInCatalog.Count()}");
 
             Console.WriteLine($@"Unneeded Folder will be moved to ""{unneededPackagesfolderName}"" Folder");
-            bool moving = new CleanVs().MoveUnneededPackagesToUnneededPackagesfolderFolder(vsOfflineDirectory, pakagesNotListedInCatalog, unneededPackagesfolderName);
+            new CleanVs().MoveUnneededPackagesToUnneededPackagesfolderFolder(vsOfflineDirectory, pakagesNotListedInCatalog, unneededPackagesfolderName);
 
-
-            if (!moving) return;
             try
             {
                 string savedDiskSpace = DirectorySize.GetFolderSize($@"{vsOfflineDirectory}\{unneededPackagesfolderName}");
